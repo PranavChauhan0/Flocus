@@ -1,0 +1,2258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flocus — Your Aesthetic Productivity Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET & BASE ─────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; }
+body {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  color: #fff;
+  user-select: none;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input  { font-family: inherit; }
+
+/* ─── BACKGROUNDS ──────────────────────────────────── */
+#bg {
+  position: fixed; inset: 0; z-index: 0;
+  transition: background 1.4s ease, opacity 0.6s ease;
+  background-size: cover !important;
+  background-position: center !important;
+}
+#bg.theme-kyoto     { background: url('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1920&q=85&auto=format&fit=crop') no-repeat center/cover; }
+#bg.theme-paris     { background: url('https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=1920&q=85&auto=format&fit=crop') no-repeat center/cover; }
+#bg.theme-forest    { background: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=85&auto=format&fit=crop') no-repeat center/cover; }
+#bg.theme-ocean     { background: url('https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1920&q=85&auto=format&fit=crop') no-repeat center/cover; }
+#bg.theme-desert    { background: url('https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=1920&q=85&auto=format&fit=crop') no-repeat center/cover; }
+#bg.theme-cozy      { background: url('https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=1920&q=85&auto=format&fit=crop') no-repeat center/cover; }
+#bg.theme-aurora    { background: url('https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&q=85&auto=format&fit=crop') no-repeat center/cover; }
+#bg.theme-city      { background: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=85&auto=format&fit=crop') no-repeat center/cover; }
+#bg.theme-cafe      { background: url('https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=1920&q=85&auto=format&fit=crop') no-repeat center/cover; }
+#bg.theme-pink      { background: linear-gradient(160deg,#f8c8d4,#f5a8c0,#e8a0b0); }
+#bg.theme-lavender  { background: linear-gradient(160deg,#c8b8f0,#b0a0e0,#9080d0); }
+#bg.theme-midnight  { background: linear-gradient(160deg,#0a0e1a,#0e1428,#141e3c); }
+#bg.theme-sage      { background: linear-gradient(160deg,#8fad8a,#7a9870,#668460); }
+
+#overlay {
+  position: fixed; inset: 0; z-index: 1;
+  background: rgba(0,0,0,0.38);
+  transition: background 1s ease;
+  pointer-events: none;
+}
+
+/* grain texture */
+#overlay::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ─── LAYOUT ───────────────────────────────────────── */
+#app {
+  position: fixed; inset: 0; z-index: 2;
+  display: flex; flex-direction: column;
+}
+
+/* ─── TOPBAR ───────────────────────────────────────── */
+#topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px;
+  flex-shrink: 0;
+}
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.95);
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.3);
+}
+.logo span { font-style: italic; opacity: 0.7; }
+.logo-wrap { display: flex; flex-direction: column; gap: 1px; }
+.logo-credit {
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.32);
+  font-family: 'Nunito', sans-serif;
+  line-height: 1;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+.tb-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.85);
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+.tb-btn:hover { background: rgba(255,255,255,0.22); color: #fff; }
+.tb-btn.active { background: rgba(255,255,255,0.28); color: #fff; }
+
+/* ─── MODE SWITCHER ────────────────────────────────── */
+#mode-switcher {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 0;
+  background: rgba(0,0,0,0.42);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 30px;
+  padding: 4px;
+  z-index: 10;
+}
+.ms-btn {
+  padding: 7px 20px;
+  border-radius: 24px;
+  font-size: 13px; font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  transition: all 0.25s ease;
+  letter-spacing: 0.2px;
+}
+.ms-btn:hover { color: rgba(255,255,255,0.85); }
+.ms-btn.active {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+}
+
+/* ─── MAIN CONTENT ─────────────────────────────────── */
+#main {
+  flex: 1; overflow: hidden;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  position: relative;
+  padding-bottom: 60px;
+}
+
+/* ═══════════════════════════════════════════
+   HOME MODE
+═══════════════════════════════════════════ */
+#home-view {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+  text-align: center;
+  animation: fadeUp 0.5s ease;
+}
+
+#home-greeting {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(38px, 6vw, 64px);
+  font-weight: 400;
+  line-height: 1.15;
+  color: #fff;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+  max-width: 700px;
+}
+
+#home-clock {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(56px, 9vw, 100px);
+  font-weight: 400;
+  letter-spacing: -2px;
+  color: #fff;
+  text-shadow: 0 4px 32px rgba(0,0,0,0.35);
+  line-height: 1;
+}
+
+#home-date {
+  font-size: 15px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.65);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+#home-quote {
+  max-width: 480px;
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.7;
+  margin-top: 8px;
+  padding: 14px 20px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 12px;
+  border-left: 2px solid rgba(255,255,255,0.25);
+}
+
+/* ═══════════════════════════════════════════
+   FOCUS MODE
+═══════════════════════════════════════════ */
+#focus-view {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  text-align: center;
+  animation: fadeUp 0.5s ease;
+  width: 100%;
+  max-width: 580px;
+  padding: 0 20px;
+}
+
+/* Timer mode tabs */
+#timer-mode-tabs {
+  display: flex; gap: 4px;
+  background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px; padding: 4px;
+  margin-bottom: 24px;
+}
+.tmt-btn {
+  padding: 5px 14px;
+  border-radius: 14px;
+  font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  transition: all 0.2s;
+}
+.tmt-btn:hover { color: rgba(255,255,255,0.8); }
+.tmt-btn.active { background: rgba(255,255,255,0.18); color: #fff; }
+
+/* Session phase label */
+#phase-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 12px;
+}
+
+/* Timer ring */
+#timer-wrap {
+  position: relative;
+  width: 280px; height: 280px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+#ring-svg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+.ring-track {
+  fill: none;
+  stroke: rgba(255,255,255,0.1);
+  stroke-width: 3;
+}
+.ring-fill {
+  fill: none;
+  stroke: rgba(255,255,255,0.85);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 659.73;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.8s linear;
+  filter: drop-shadow(0 0 6px rgba(255,255,255,0.5));
+}
+
+#timer-digits {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(52px, 9vw, 72px);
+  font-weight: 400;
+  letter-spacing: -3px;
+  color: #fff;
+  text-shadow: 0 2px 24px rgba(0,0,0,0.3);
+  line-height: 1;
+  z-index: 1;
+  cursor: default;
+  max-width: 220px;
+  text-align: center;
+}
+#timer-digits.clickable { cursor: pointer; }
+#timer-digits.clickable:hover { opacity: 0.85; }
+
+/* Session pips */
+#session-pips {
+  display: flex; gap: 7px; align-items: center;
+  margin-bottom: 22px;
+}
+.pip {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  transition: all 0.3s ease;
+}
+.pip.done { background: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.8); }
+.pip.current { background: #fff; border-color: #fff; transform: scale(1.3); box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+
+/* Current priority task */
+#focus-task {
+  font-size: 15px; font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 28px;
+  max-width: 400px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 10px 18px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.12);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+#focus-task:hover { background: rgba(0,0,0,0.35); }
+#focus-task.no-task { color: rgba(255,255,255,0.4); font-weight: 400; font-style: italic; }
+
+/* Timer controls */
+#timer-controls {
+  display: flex; align-items: center; gap: 14px;
+}
+.ctrl-circle {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  color: rgba(255,255,255,0.8);
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.ctrl-circle:hover { background: rgba(255,255,255,0.22); color: #fff; }
+
+#btn-play-pause {
+  width: 62px; height: 62px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.22);
+  border: 2px solid rgba(255,255,255,0.5);
+  color: #fff;
+  font-size: 22px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+#btn-play-pause:hover { background: rgba(255,255,255,0.32); transform: scale(1.04); }
+#btn-play-pause.running { background: rgba(255,255,255,0.15); }
+
+/* ═══════════════════════════════════════════
+   AMBIENT MODE
+═══════════════════════════════════════════ */
+#ambient-view {
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  position: absolute;
+  top: 20px; right: 24px;
+  animation: fadeIn 0.5s ease;
+}
+#ambient-mini-timer {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.7);
+  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  letter-spacing: -1px;
+}
+#ambient-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* ─── ANIMATIONS ───────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── QUOTE CORNER (Focus mode) ─────────────────────── */
+#quote-corner {
+  position: fixed; top: 68px; right: 24px;
+  max-width: 220px;
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.6;
+  text-align: right;
+  display: none;
+  animation: fadeIn 0.5s ease;
+}
+
+/* ══════════════════════════════════════════════════════
+   PANELS (slide-over)
+══════════════════════════════════════════════════════ */
+.panel-overlay {
+  position: fixed; inset: 0; z-index: 20;
+  display: flex; align-items: stretch; justify-content: flex-end;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.panel-overlay.open { pointer-events: all; opacity: 1; }
+
+.panel-scrim {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.panel {
+  position: relative; z-index: 1;
+  width: 340px;
+  background: rgba(12,10,18,0.82);
+  backdrop-filter: blur(40px) saturate(1.4);
+  border-left: 1px solid rgba(255,255,255,0.1);
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+.panel-overlay.open .panel { transform: translateX(0); }
+.panel-overlay.left-panel-overlay { justify-content: flex-start; }
+.panel-overlay.left-panel-overlay .panel {
+  border-left: none; border-right: 1px solid rgba(255,255,255,0.1);
+  transform: translateX(-100%);
+}
+.panel-overlay.left-panel-overlay.open .panel { transform: translateX(0); }
+
+.panel-head {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.panel-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px; font-weight: 500;
+  color: rgba(255,255,255,0.9);
+}
+.panel-close {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.55);
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.panel-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+.panel-body {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.panel-body::-webkit-scrollbar { width: 3px; }
+.panel-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+.psec-title {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 10px;
+}
+
+/* ─── Field rows ─── */
+.field-row {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 12px;
+  margin-bottom: 8px;
+}
+.field-label { font-size: 13px; color: rgba(255,255,255,0.65); flex: 1; }
+.num-input {
+  width: 72px; padding: 7px 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 8px;
+  color: #fff; font-family: inherit; font-size: 13px;
+  text-align: center; outline: none;
+  transition: border-color 0.2s;
+}
+.num-input:focus { border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.12); }
+
+/* Toggle */
+.tog-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.toggle {
+  width: 40px; height: 22px;
+  border-radius: 11px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  position: relative; cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: rgba(255,255,255,0.6); }
+.toggle::after {
+  content: '';
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #fff;
+  transition: left 0.2s, opacity 0.2s;
+  opacity: 0.9;
+}
+.toggle.on::after { left: 20px; }
+
+/* Save btn */
+.save-btn {
+  width: 100%; padding: 10px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 10px;
+  color: #fff; font-size: 13px; font-weight: 600;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+.save-btn:hover { background: rgba(255,255,255,0.25); }
+
+/* Range */
+.range-wrap { display: flex; flex-direction: column; gap: 6px; }
+.range-label-row { display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.5); }
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%; height: 4px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 2px; outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(0,0,0,0.3);
+}
+
+/* ─── THEME GRID ─── */
+.theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.theme-swatch {
+  aspect-ratio: 16/10;
+  border-radius: 8px; overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+}
+.theme-swatch:hover { border-color: rgba(255,255,255,0.5); transform: scale(1.03); }
+.theme-swatch.active { border-color: #fff; }
+.theme-swatch span {
+  position: absolute; inset: 0;
+  display: flex; align-items: flex-end; padding: 4px 5px;
+  font-size: 10px; font-weight: 600; color: #fff;
+  background: linear-gradient(transparent, rgba(0,0,0,0.5));
+}
+.sw-kyoto    { background: url('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=240&q=60&auto=format&fit=crop') center/cover; }
+.sw-paris    { background: url('https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=240&q=60&auto=format&fit=crop') center/cover; }
+.sw-forest   { background: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=240&q=60&auto=format&fit=crop') center/cover; }
+.sw-ocean    { background: url('https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=240&q=60&auto=format&fit=crop') center/cover; }
+.sw-desert   { background: url('https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=240&q=60&auto=format&fit=crop') center/cover; }
+.sw-cozy     { background: url('https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=240&q=60&auto=format&fit=crop') center/cover; }
+.sw-aurora   { background: url('https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=240&q=60&auto=format&fit=crop') center/cover; }
+.sw-city     { background: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=240&q=60&auto=format&fit=crop') center/cover; }
+.sw-cafe     { background: url('https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=240&q=60&auto=format&fit=crop') center/cover; }
+.sw-pink     { background: linear-gradient(160deg,#f8c8d4,#f5a8c0); }
+.sw-lavender { background: linear-gradient(160deg,#c8b8f0,#b0a0e0); }
+.sw-midnight { background: linear-gradient(160deg,#0a0e1a,#141e3c); }
+.sw-sage     { background: linear-gradient(160deg,#8fad8a,#668460); }
+
+/* ─── GIF / VIDEO BACKGROUND ───────────────────────── */
+#bg-gif {
+  position: fixed; inset: 0; z-index: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: none;
+  pointer-events: none;
+}
+#bg-gif.active { display: block; }
+
+/* GIF theme classes — bg-layer uses background-image */
+#bg.theme-gif-lofi    { background: none; }
+#bg.theme-gif-rain    { background: none; }
+#bg.theme-gif-space   { background: none; }
+#bg.theme-gif-cherry  { background: none; }
+#bg.theme-gif-snow    { background: none; }
+#bg.theme-gif-custom  { background: none; }
+
+/* GIF swatch previews */
+.sw-gif-lofi   { background: linear-gradient(135deg,#2c1654,#4a2080); position:relative; }
+.sw-gif-rain   { background: linear-gradient(135deg,#1a2a3a,#2a4a6a); }
+.sw-gif-space  { background: linear-gradient(135deg,#0a0015,#1a0030); }
+.sw-gif-cherry { background: linear-gradient(135deg,#3d0c1f,#7a1f3d); }
+.sw-gif-snow   { background: linear-gradient(135deg,#1a2a3a,#3a5a7a); }
+.sw-gif-custom { background: rgba(255,255,255,0.06); border: 1px dashed rgba(255,255,255,0.25) !important; }
+
+.gif-badge {
+  position: absolute; top: 4px; right: 4px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(6px);
+  border-radius: 4px;
+  font-size: 8px; font-weight: 700;
+  padding: 1px 4px;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+#custom-gif-file { display: none; }
+.sound-card {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px; border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  transition: all 0.2s;
+}
+.sound-card.on { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.22); }
+.sc-row { display: flex; align-items: center; justify-content: space-between; }
+.sc-name { font-size: 13px; color: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 8px; }
+.sc-icon { font-size: 16px; }
+
+/* ─── TASKS ─── */
+.task-add-row { display: flex; gap: 8px; }
+.task-input {
+  flex: 1; padding: 10px 14px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 10px;
+  color: #fff; font-family: inherit; font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.task-input:focus { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.12); }
+.task-input::placeholder { color: rgba(255,255,255,0.35); }
+.task-add-btn {
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  color: #fff; font-size: 13px; font-weight: 600;
+  transition: all 0.2s;
+}
+.task-add-btn:hover { background: rgba(255,255,255,0.25); }
+
+.task-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.2s;
+  cursor: pointer;
+  animation: slideDown 0.2s ease;
+}
+@keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+.task-item:hover { background: rgba(255,255,255,0.09); }
+.task-item.priority { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); }
+.task-item.done { opacity: 0.45; }
+.task-item.done .task-txt { text-decoration: line-through; }
+
+.task-check {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,0.35);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+  transition: all 0.2s;
+}
+.task-item.done .task-check { background: rgba(255,255,255,0.6); border-color: rgba(255,255,255,0.6); }
+.task-item.priority .task-check { border-color: #fff; }
+
+.task-txt { flex: 1; font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.4; word-break: break-word; }
+.task-star {
+  opacity: 0; font-size: 13px; color: rgba(255,255,255,0.5);
+  transition: all 0.2s;
+}
+.task-del {
+  opacity: 0; font-size: 12px; color: rgba(255,100,100,0.7);
+  transition: all 0.2s; padding: 2px 4px;
+}
+.task-item:hover .task-star,
+.task-item:hover .task-del { opacity: 1; }
+.task-item.priority .task-star { opacity: 1; color: #fff; }
+
+/* ─── STATS ─── */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-box {
+  padding: 14px; border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.09);
+}
+.stat-box-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 4px; }
+.stat-box-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px; font-weight: 400;
+  color: rgba(255,255,255,0.9);
+}
+.stat-box-sub { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+.streak-box {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px; border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.09);
+}
+.streak-num { font-family: 'Playfair Display', serif; font-size: 36px; color: #ffb347; }
+.streak-sub { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+.goal-bar-wrap { display: flex; flex-direction: column; gap: 6px; }
+.goal-bar-row { display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.5); }
+.goal-bar-track {
+  height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;
+}
+.goal-bar-fill {
+  height: 100%; background: rgba(255,255,255,0.65); border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.week-bars { display: flex; gap: 5px; align-items: flex-end; height: 70px; }
+.wbar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.wbar-track { width: 100%; flex: 1; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column-reverse; }
+.wbar-fill { background: rgba(255,255,255,0.55); border-radius: 4px; transition: height 0.4s ease; }
+.wbar-label { font-size: 10px; color: rgba(255,255,255,0.38); }
+
+/* ─── TOAST ─── */
+#toast {
+  position: fixed; bottom: 70px; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: rgba(10,8,18,0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 30px; padding: 10px 22px;
+  font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  opacity: 0; pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 50; white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* keyboard shortcut badge */
+#kb-hint {
+  position: fixed; bottom: 72px; right: 24px;
+  display: flex; flex-direction: column; gap: 5px;
+  z-index: 5;
+  opacity: 0.4;
+  pointer-events: none;
+}
+.kb-row { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.7); }
+.kbd { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 1px 6px; font-size: 10px; font-family: monospace; }
+
+/* ─── MISC ─── */
+.divider { height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0; }
+#custom-bg-file { display: none; }
+.upload-zone {
+  width: 100%; padding: 12px;
+  border: 1px dashed rgba(255,255,255,0.2);
+  border-radius: 10px; text-align: center;
+  font-size: 12px; color: rgba(255,255,255,0.45);
+  cursor: pointer; transition: all 0.2s;
+}
+.upload-zone:hover { border-color: rgba(255,255,255,0.45); color: rgba(255,255,255,0.7); }
+
+/* ════════════════════════════════════════
+   MOBILE & RESPONSIVE
+════════════════════════════════════════ */
+
+/* Touch targets */
+@media (hover: none) {
+  .task-star, .task-del { opacity: 1 !important; }
+  .tb-btn { width: 40px; height: 40px; }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  #topbar { padding: 12px 14px; }
+
+  .logo { font-size: 16px; }
+  .logo-credit { font-size: 8.5px; }
+
+  .topbar-right { gap: 6px; }
+  .tb-btn { width: 34px; height: 34px; font-size: 13px; }
+
+  #main { padding-bottom: 70px; }
+
+  /* Home */
+  #home-view { gap: 10px; padding: 0 16px; }
+  #home-clock { font-size: 52px; letter-spacing: -2px; }
+  #home-greeting { font-size: 22px; }
+  #home-date { font-size: 12px; }
+  #home-quote { font-size: 13px; padding: 10px 14px; max-width: 320px; }
+
+  /* Focus */
+  #focus-view { padding: 0 12px; }
+  #timer-mode-tabs { gap: 2px; padding: 3px; margin-bottom: 16px; }
+  .tmt-btn { padding: 5px 9px; font-size: 11px; }
+  #phase-label { font-size: 10px; letter-spacing: 2px; margin-bottom: 8px; }
+
+  #timer-wrap { width: 210px; height: 210px; margin-bottom: 14px; }
+  #timer-digits { font-size: 48px; letter-spacing: -2px; }
+
+  #session-pips { margin-bottom: 14px; gap: 6px; }
+  .pip { width: 6px; height: 6px; }
+
+  #focus-task { font-size: 13px; padding: 9px 14px; margin-bottom: 18px; max-width: 300px; }
+
+  #timer-controls { gap: 12px; }
+  .ctrl-circle { width: 40px; height: 40px; font-size: 14px; }
+  #btn-play-pause { width: 56px; height: 56px; font-size: 20px; }
+
+  /* Panels — full width on mobile */
+  .panel { width: 100vw; border-left: none; border-top: 1px solid rgba(255,255,255,0.1); }
+  .panel-overlay { align-items: flex-end; }
+  .panel-overlay .panel {
+    height: 85vh;
+    border-radius: 20px 20px 0 0;
+    transform: translateY(100%) !important;
+  }
+  .panel-overlay.open .panel { transform: translateY(0) !important; }
+  .panel-overlay.left-panel-overlay { align-items: flex-end; justify-content: center; }
+  .panel-overlay.left-panel-overlay .panel {
+    height: 85vh;
+    border-radius: 20px 20px 0 0;
+    border-right: none;
+    transform: translateY(100%) !important;
+  }
+  .panel-overlay.left-panel-overlay.open .panel { transform: translateY(0) !important; }
+
+  /* Theme grid 2 cols on small screens */
+  .theme-grid { grid-template-columns: repeat(2, 1fr); gap: 7px; }
+
+  /* Mode switcher */
+  #mode-switcher { bottom: 14px; }
+  .ms-btn { padding: 6px 14px; font-size: 12px; }
+
+  /* Hide keyboard hints on mobile */
+  #kb-hint { display: none !important; }
+
+  /* Stats grid */
+  .stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-box-val { font-size: 24px; }
+  .streak-num { font-size: 30px; }
+
+  /* Quote corner hidden on mobile */
+  #quote-corner { display: none !important; }
+
+  /* Toast */
+  #toast { font-size: 12px; padding: 9px 18px; bottom: 80px; }
+}
+
+/* Medium phones */
+@media (min-width: 481px) and (max-width: 768px) {
+  #topbar { padding: 14px 18px; }
+  .tb-btn { width: 36px; height: 36px; }
+
+  #home-clock { font-size: 68px; }
+  #home-greeting { font-size: 30px; }
+
+  #timer-wrap { width: 240px; height: 240px; }
+  #timer-digits { font-size: 56px; }
+
+  .panel { width: 88vw; max-width: 380px; }
+  .panel-overlay.left-panel-overlay .panel { width: 88vw; max-width: 380px; }
+
+  #kb-hint { display: none !important; }
+}
+
+/* Tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+  #timer-wrap { width: 260px; height: 260px; }
+  #timer-digits { font-size: 62px; }
+  .panel { width: 360px; }
+}
+
+/* Short screens (landscape mobile) */
+@media (max-height: 600px) {
+  #topbar { padding: 8px 18px; }
+  #home-view { gap: 6px; }
+  #home-clock { font-size: 48px; }
+  #home-greeting { font-size: 20px; }
+  #home-quote { display: none; }
+
+  #timer-wrap { width: 180px; height: 180px; margin-bottom: 10px; }
+  #timer-digits { font-size: 44px; }
+  #phase-label { margin-bottom: 6px; }
+  #timer-mode-tabs { margin-bottom: 10px; }
+  #session-pips { margin-bottom: 10px; }
+  #focus-task { margin-bottom: 12px; }
+  #mode-switcher { bottom: 8px; }
+  #quote-corner { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- Background layers -->
+<div id="bg" class="theme-kyoto"></div>
+<img id="bg-gif" src="" alt="" aria-hidden="true">
+<input type="file" id="custom-gif-file" accept="image/gif,video/mp4,video/webm" onchange="loadCustomGif(event)">
+<div id="overlay"></div>
+
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="logo-wrap">
+      <div class="logo">flo<span>cus</span></div>
+      <div class="logo-credit">by Pranav Chauhan</div>
+    </div>
+    <div class="topbar-right">
+      <button class="tb-btn" id="btn-tasks" title="Tasks (T)" aria-label="Tasks">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </button>
+      <button class="tb-btn" id="btn-sounds" title="Sounds (A)" aria-label="Sounds">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      </button>
+      <button class="tb-btn" id="btn-themes" title="Themes (H)" aria-label="Themes">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      </button>
+      <button class="tb-btn" id="btn-stats" title="Stats" aria-label="Stats">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      </button>
+      <button class="tb-btn" id="btn-settings" title="Settings (,)" aria-label="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div id="main">
+
+    <!-- HOME VIEW -->
+    <div id="home-view">
+      <div id="home-date"></div>
+      <div id="home-clock">00:00</div>
+      <div id="home-greeting">Good morning ✨</div>
+      <div id="home-quote">"The secret of getting ahead is getting started."<br><span style="font-size:12px;opacity:0.6;font-style:normal;">— Mark Twain</span></div>
+    </div>
+
+    <!-- FOCUS VIEW -->
+    <div id="focus-view">
+      <div id="timer-mode-tabs">
+        <button class="tmt-btn active" data-tm="pomodoro">Pomodoro</button>
+        <button class="tmt-btn" data-tm="countdown">Countdown</button>
+        <button class="tmt-btn" data-tm="stopwatch">Stopwatch</button>
+        <button class="tmt-btn" data-tm="5217">52/17</button>
+      </div>
+
+      <div id="phase-label">Focus Session</div>
+
+      <div id="timer-wrap">
+        <svg id="ring-svg" viewBox="-5 -5 230 230">
+          <circle class="ring-track" cx="110" cy="110" r="105"/>
+          <circle class="ring-fill" cx="110" cy="110" r="105" id="ring-progress"/>
+        </svg>
+        <div id="timer-digits">25:00</div>
+      </div>
+
+      <div id="session-pips"></div>
+
+      <div id="focus-task" class="no-task" onclick="openPanel('tasks')">+ Add a priority task</div>
+
+      <div id="timer-controls">
+        <button class="ctrl-circle" id="btn-reset" title="Reset (R)">↺</button>
+        <button id="btn-play-pause" title="Start/Pause (Space)">▶</button>
+        <button class="ctrl-circle" id="btn-skip" title="Skip ⟩">⟩</button>
+      </div>
+    </div>
+
+    <!-- AMBIENT VIEW -->
+    <div id="ambient-view">
+      <div id="ambient-mini-timer">25:00</div>
+      <div id="ambient-label">Ambient</div>
+    </div>
+
+    <!-- Floating quote for focus mode -->
+    <div id="quote-corner"></div>
+  </div>
+
+  <!-- MODE SWITCHER -->
+  <div id="mode-switcher">
+    <button class="ms-btn" data-mode="home">Home</button>
+    <button class="ms-btn active" data-mode="focus">Focus</button>
+    <button class="ms-btn" data-mode="ambient">Ambient</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SETTINGS PANEL
+══════════════════════════════════════════ -->
+<div class="panel-overlay" id="panel-settings">
+  <div class="panel-scrim" onclick="closePanel('settings')"></div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Settings</div>
+      <button class="panel-close" onclick="closePanel('settings')">✕</button>
+    </div>
+    <div class="panel-body">
+
+      <div>
+        <div class="psec-title">Timer Durations (minutes)</div>
+        <div class="field-row"><span class="field-label">Focus</span><input class="num-input" type="number" id="s-focus" min="1" max="120" value="25"></div>
+        <div class="field-row"><span class="field-label">Short break</span><input class="num-input" type="number" id="s-short" min="1" max="60" value="5"></div>
+        <div class="field-row"><span class="field-label">Long break</span><input class="num-input" type="number" id="s-long" min="1" max="60" value="15"></div>
+        <div class="field-row"><span class="field-label">Sessions before long break</span><input class="num-input" type="number" id="s-sessions" min="2" max="10" value="4"></div>
+        <div class="field-row"><span class="field-label">52/17 Focus (min)</span><input class="num-input" type="number" id="s-52" min="1" max="120" value="52"></div>
+        <div class="field-row"><span class="field-label">52/17 Break (min)</span><input class="num-input" type="number" id="s-17" min="1" max="60" value="17"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="psec-title">Behaviour</div>
+        <div class="tog-row"><span class="field-label">Auto-start breaks</span><div class="toggle" id="tog-ab"></div></div>
+        <div class="tog-row"><span class="field-label">Auto-start focus</span><div class="toggle" id="tog-af"></div></div>
+        <div class="tog-row"><span class="field-label">Desktop notifications</span><div class="toggle" id="tog-notifs" class="on"></div></div>
+        <div class="tog-row"><span class="field-label">Show motivational quotes</span><div class="toggle on" id="tog-quotes"></div></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="psec-title">Overlay Darkness</div>
+        <div class="range-wrap">
+          <input type="range" id="s-overlay" min="0" max="80" value="38" oninput="setOverlay(this.value)">
+          <div class="range-label-row"><span>Light</span><span>Dark</span></div>
+        </div>
+      </div>
+
+      <button class="save-btn" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     THEMES PANEL
+══════════════════════════════════════════ -->
+<div class="panel-overlay" id="panel-themes">
+  <div class="panel-scrim" onclick="closePanel('themes')"></div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Themes</div>
+      <button class="panel-close" onclick="closePanel('themes')">✕</button>
+    </div>
+    <div class="panel-body">
+      <div>
+        <div class="psec-title">Destinations</div>
+        <div class="theme-grid">
+          <div class="theme-swatch sw-kyoto active" data-theme="theme-kyoto" onclick="setTheme('theme-kyoto',this)"><span>Kyoto</span></div>
+          <div class="theme-swatch sw-paris" data-theme="theme-paris" onclick="setTheme('theme-paris',this)"><span>Paris</span></div>
+          <div class="theme-swatch sw-forest" data-theme="theme-forest" onclick="setTheme('theme-forest',this)"><span>Forest</span></div>
+          <div class="theme-swatch sw-ocean" data-theme="theme-ocean" onclick="setTheme('theme-ocean',this)"><span>Ocean</span></div>
+          <div class="theme-swatch sw-desert" data-theme="theme-desert" onclick="setTheme('theme-desert',this)"><span>Desert</span></div>
+          <div class="theme-swatch sw-cozy" data-theme="theme-cozy" onclick="setTheme('theme-cozy',this)"><span>Cozy</span></div>
+          <div class="theme-swatch sw-aurora" data-theme="theme-aurora" onclick="setTheme('theme-aurora',this)"><span>Aurora</span></div>
+          <div class="theme-swatch sw-city" data-theme="theme-city" onclick="setTheme('theme-city',this)"><span>City</span></div>
+          <div class="theme-swatch sw-cafe" data-theme="theme-cafe" onclick="setTheme('theme-cafe',this)"><span>Café</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="psec-title">Gradients</div>
+        <div class="theme-grid">
+          <div class="theme-swatch sw-pink" data-theme="theme-pink" onclick="setTheme('theme-pink',this)"><span>Rose</span></div>
+          <div class="theme-swatch sw-lavender" data-theme="theme-lavender" onclick="setTheme('theme-lavender',this)"><span>Lavender</span></div>
+          <div class="theme-swatch sw-midnight" data-theme="theme-midnight" onclick="setTheme('theme-midnight',this)"><span>Midnight</span></div>
+          <div class="theme-swatch sw-sage" data-theme="theme-sage" onclick="setTheme('theme-sage',this)"><span>Sage</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="psec-title">Custom Image</div>
+        <input type="file" id="custom-bg-file" accept="image/*" onchange="loadCustomBg(event)">
+        <div class="upload-zone" onclick="document.getElementById('custom-bg-file').click()">↑ Upload photo background</div>
+      </div>
+      <div>
+        <div class="psec-title">Animated GIFs ✨</div>
+        <div class="theme-grid">
+          <div class="theme-swatch sw-gif-lofi" data-gif="lofi" onclick="setGifTheme('lofi',this)" style="position:relative">
+            <div class="gif-badge">GIF</div><span>Lo-Fi Room</span>
+          </div>
+          <div class="theme-swatch sw-gif-rain" data-gif="rain" onclick="setGifTheme('rain',this)" style="position:relative">
+            <div class="gif-badge">GIF</div><span>Rainy Day</span>
+          </div>
+          <div class="theme-swatch sw-gif-space" data-gif="space" onclick="setGifTheme('space',this)" style="position:relative">
+            <div class="gif-badge">GIF</div><span>Deep Space</span>
+          </div>
+          <div class="theme-swatch sw-gif-cherry" data-gif="cherry" onclick="setGifTheme('cherry',this)" style="position:relative">
+            <div class="gif-badge">GIF</div><span>Cherry Bloom</span>
+          </div>
+          <div class="theme-swatch sw-gif-snow" data-gif="snow" onclick="setGifTheme('snow',this)" style="position:relative">
+            <div class="gif-badge">GIF</div><span>Snowfall</span>
+          </div>
+          <div class="theme-swatch sw-gif-custom" data-gif="custom" onclick="document.getElementById('custom-gif-file').click()" style="position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;">
+            <div style="font-size:18px;">+</div><span style="font-size:9px;position:relative;bottom:auto;background:none;padding:0;left:auto;">Your GIF</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:6px;line-height:1.5;">Upload your own .gif or video file. GIFs may take a moment to load.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SOUNDS PANEL
+══════════════════════════════════════════ -->
+<div class="panel-overlay" id="panel-sounds">
+  <div class="panel-scrim" onclick="closePanel('sounds')"></div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Soundscapes</div>
+      <button class="panel-close" onclick="closePanel('sounds')">✕</button>
+    </div>
+    <div class="panel-body">
+      <div>
+        <div class="psec-title">Layer multiple sounds</div>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="sound-list">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+      <div>
+        <div class="psec-title">Focus Music</div>
+        <div style="display:flex;flex-direction:column;gap:6px;" id="music-list">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+      <div>
+        <div class="psec-title">Master Volume</div>
+        <input type="range" id="master-vol" min="0" max="1" step="0.05" value="0.7" oninput="setMasterVol(this.value)">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TASKS PANEL
+══════════════════════════════════════════ -->
+<div class="panel-overlay left-panel-overlay" id="panel-tasks">
+  <div class="panel-scrim" onclick="closePanel('tasks')"></div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Focus To-Dos</div>
+      <button class="panel-close" onclick="closePanel('tasks')">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="task-add-row">
+        <input type="text" class="task-input" id="task-in" placeholder="What are you working on?" maxlength="120" onkeydown="if(event.key==='Enter')addTask()">
+        <button class="task-add-btn" onclick="addTask()">Add</button>
+      </div>
+      <div>
+        <div class="psec-title">Your tasks <span id="task-count" style="font-weight:400;text-transform:none;letter-spacing:0;"></span></div>
+        <div id="task-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     STATS PANEL
+══════════════════════════════════════════ -->
+<div class="panel-overlay" id="panel-stats">
+  <div class="panel-scrim" onclick="closePanel('stats')"></div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Focus Stats</div>
+      <button class="panel-close" onclick="closePanel('stats')">✕</button>
+    </div>
+    <div class="panel-body">
+      <div>
+        <div class="psec-title">Today</div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-box-label">Focus Time</div><div class="stat-box-val" id="st-time">0m</div><div class="stat-box-sub">today</div></div>
+          <div class="stat-box"><div class="stat-box-label">Sessions</div><div class="stat-box-val" id="st-sess">0</div><div class="stat-box-sub">completed</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="streak-box">
+          <div style="font-size:32px;">🔥</div>
+          <div><div class="streak-num" id="st-streak">0</div><div class="streak-sub">day streak</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="psec-title">Daily Goal (sessions)</div>
+        <div class="goal-bar-wrap">
+          <div class="goal-bar-row"><span id="gb-cur">0 / 8</span><span>Goal: 8</span></div>
+          <div class="goal-bar-track"><div class="goal-bar-fill" id="gb-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="psec-title">This Week</div>
+        <div class="week-bars" id="week-bars"></div>
+      </div>
+      <div>
+        <div class="psec-title">All Time</div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-box-label">Hours</div><div class="stat-box-val" id="st-total-h">0</div></div>
+          <div class="stat-box"><div class="stat-box-label">Sessions</div><div class="stat-box-val" id="st-total-s">0</div></div>
+        </div>
+      </div>
+      <button class="save-btn" style="background:rgba(200,60,60,0.15);border-color:rgba(200,60,60,0.35);" onclick="resetStats()">Reset All Stats</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- KB HINT -->
+<div id="kb-hint">
+  <div class="kb-row"><span class="kbd">Space</span> Play/Pause</div>
+  <div class="kb-row"><span class="kbd">R</span> Reset</div>
+  <div class="kb-row"><span class="kbd">T</span> Tasks</div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  APP STATE
+// ══════════════════════════════════════════════════════════
+const APP = {
+  mode: 'focus',          // home | focus | ambient
+  timerMode: 'pomodoro',  // pomodoro | countdown | stopwatch | 5217
+  phase: 'focus',         // focus | short | long
+  pomSession: 1,
+  running: false,
+  elapsed: 0,
+  totalSec: 25 * 60,
+  interval: null,
+  priorityTask: null,
+
+  cfg: {
+    focus: 25, shortBreak: 5, longBreak: 15, sessions: 4,
+    focus52: 52, break17: 17,
+    autoBreak: false, autoFocus: false, notifs: true, quotes: true,
+    overlay: 38, theme: 'theme-kyoto',
+    masterVol: 0.7,
+  },
+
+  tasks: [],
+  sounds: {},   // name -> { on, vol, nodes }
+  musicOn: null,
+
+  stats: {
+    todayDate: '',
+    todaySess: 0, todayMin: 0,
+    totalSess: 0, totalMin: 0,
+    week: [0,0,0,0,0,0,0],
+    streak: 0, lastDate: '',
+  },
+};
+
+// ══════════════════════════════════════════════════════════
+//  QUOTES
+// ══════════════════════════════════════════════════════════
+const QUOTES = [
+  ["The secret of getting ahead is getting started.", "Mark Twain"],
+  ["It always seems impossible until it's done.", "Nelson Mandela"],
+  ["You don't have to be great to start, but you have to start to be great.", "Zig Ziglar"],
+  ["Focus is the art of knowing what to ignore.", "James Clear"],
+  ["Small steps every day lead to big results.", "Unknown"],
+  ["Discipline is choosing between what you want now and what you want most.", "Abraham Lincoln"],
+  ["Done is better than perfect.", "Sheryl Sandberg"],
+  ["The way to get started is to quit talking and begin doing.", "Walt Disney"],
+  ["Your time is limited. Don't waste it living someone else's life.", "Steve Jobs"],
+  ["Energy and persistence conquer all things.", "Benjamin Franklin"],
+  ["Concentrate all your thoughts upon the work at hand.", "Alexander Graham Bell"],
+  ["Either you run the day, or the day runs you.", "Jim Rohn"],
+  ["The future depends on what you do today.", "Mahatma Gandhi"],
+  ["Success is the sum of small efforts, repeated day in and day out.", "Robert Collier"],
+  ["You miss 100% of the shots you don't take.", "Wayne Gretzky"],
+  ["Don't watch the clock; do what it does — keep going.", "Sam Levenson"],
+  ["Hard work beats talent when talent doesn't work hard.", "Tim Notke"],
+  ["Motivation gets you started. Habit keeps you going.", "Jim Ryun"],
+  ["The only way to do great work is to love what you do.", "Steve Jobs"],
+  ["It's not about having time. It's about making time.", "Unknown"],
+  ["Start where you are. Use what you have. Do what you can.", "Arthur Ashe"],
+  ["Deep work is the ability to focus without distraction.", "Cal Newport"],
+  ["One hour of concentrated work equals three of distracted work.", "Unknown"],
+  ["Creativity is intelligence having fun.", "Albert Einstein"],
+  ["The most effective way to do it is to do it.", "Amelia Earhart"],
+  ["Work hard in silence. Let success make the noise.", "Unknown"],
+  ["Push yourself, because no one else is going to do it for you.", "Unknown"],
+  ["Great things are done by a series of small things brought together.", "Vincent Van Gogh"],
+  ["Don't stop when you're tired. Stop when you're done.", "Unknown"],
+  ["A little progress each day adds up to big results.", "Unknown"],
+  ["The difference between ordinary and extraordinary is that little extra.", "Jimmy Johnson"],
+  ["Believe you can and you're halfway there.", "Theodore Roosevelt"],
+  ["Do something today that your future self will thank you for.", "Unknown"],
+  ["An investment in knowledge pays the best interest.", "Benjamin Franklin"],
+  ["The pain of discipline is far less than the pain of regret.", "Unknown"],
+  ["Every expert was once a beginner.", "Helen Hayes"],
+  ["Success isn't given. It's earned in the hours nobody sees.", "Unknown"],
+  ["The only limit to your impact is your imagination and commitment.", "Tony Robbins"],
+  ["You don't have to see the whole staircase, just take the first step.", "Martin Luther King Jr."],
+  ["Strive not to be a success, but rather to be of value.", "Albert Einstein"],
+];
+
+let currentQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+
+function getQuoteHTML() {
+  return `"${currentQuote[0]}"<br><span style="font-size:12px;opacity:0.6;font-style:normal;">— ${currentQuote[1]}</span>`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════
+function init() {
+  loadStorage();
+  applyConfig();
+  renderClock();
+  document.getElementById('home-quote').innerHTML = getQuoteHTML();
+  document.getElementById('quote-corner').innerHTML = `"${currentQuote[0]}"`;
+  setInterval(renderClock, 1000);
+  buildSessionPips();
+  buildSoundCards();
+  buildMusicList();
+  renderTasks();
+  renderStats();
+  switchMode(APP.mode, false);
+  updateTimerDisplay();
+  updateRing();
+
+  // Quote rotation every 10 min
+  setInterval(() => {
+    currentQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+    document.getElementById('home-quote').innerHTML = getQuoteHTML();
+    document.getElementById('quote-corner').innerHTML = `"${currentQuote[0]}"`;
+  }, 600000);
+}
+
+// ══════════════════════════════════════════════════════════
+//  STORAGE
+// ══════════════════════════════════════════════════════════
+function loadStorage() {
+  try {
+    const c = localStorage.getItem('flocus_cfg');
+    if (c) APP.cfg = { ...APP.cfg, ...JSON.parse(c) };
+    const t = localStorage.getItem('flocus_tasks');
+    if (t) APP.tasks = JSON.parse(t);
+    const s = localStorage.getItem('flocus_stats');
+    if (s) APP.stats = { ...APP.stats, ...JSON.parse(s) };
+    const today = new Date().toDateString();
+    if (APP.stats.todayDate !== today) {
+      APP.stats.todayDate = today;
+      APP.stats.todaySess = 0;
+      APP.stats.todayMin = 0;
+    }
+    saveStats();
+  } catch(e) {}
+}
+
+function saveCfg() { localStorage.setItem('flocus_cfg', JSON.stringify(APP.cfg)); }
+function saveTasks() { localStorage.setItem('flocus_tasks', JSON.stringify(APP.tasks)); }
+function saveStats() { localStorage.setItem('flocus_stats', JSON.stringify(APP.stats)); }
+
+// ══════════════════════════════════════════════════════════
+//  APPLY CONFIG → UI
+// ══════════════════════════════════════════════════════════
+function applyConfig() {
+  const c = APP.cfg;
+  document.getElementById('s-focus').value  = c.focus;
+  document.getElementById('s-short').value  = c.shortBreak;
+  document.getElementById('s-long').value   = c.longBreak;
+  document.getElementById('s-sessions').value = c.sessions;
+  document.getElementById('s-52').value     = c.focus52;
+  document.getElementById('s-17').value     = c.break17;
+  document.getElementById('s-overlay').value = c.overlay;
+  setOverlay(c.overlay, false);
+
+  togSet('tog-ab', c.autoBreak);
+  togSet('tog-af', c.autoFocus);
+  togSet('tog-notifs', c.notifs);
+  togSet('tog-quotes', c.quotes);
+
+  document.getElementById('bg').className = c.theme;
+  // Restore GIF if saved
+  if (c.gifTheme && c.gifUrl && c.gifTheme !== 'custom') {
+    applyGifBg(c.gifUrl);
+    document.querySelectorAll('.theme-swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.gif === c.gifTheme);
+    });
+  } else {
+    document.querySelectorAll('.theme-swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.theme === c.theme);
+    });
+  }
+
+  document.getElementById('master-vol').value = c.masterVol;
+
+  // Toggle click handlers
+  ['tog-ab','tog-af','tog-notifs','tog-quotes'].forEach(id => {
+    document.getElementById(id).onclick = () => {
+      const el = document.getElementById(id);
+      const map = { 'tog-ab':'autoBreak','tog-af':'autoFocus','tog-notifs':'notifs','tog-quotes':'quotes' };
+      APP.cfg[map[id]] = !APP.cfg[map[id]];
+      togSet(id, APP.cfg[map[id]]);
+    };
+  });
+
+  // Init timer
+  APP.totalSec = c.focus * 60;
+}
+
+function togSet(id, val) { document.getElementById(id).classList.toggle('on', val); }
+
+// ══════════════════════════════════════════════════════════
+//  CLOCK (Home)
+// ══════════════════════════════════════════════════════════
+function renderClock() {
+  const now = new Date();
+  const rawH = now.getHours();
+  const ampm = rawH >= 12 ? 'PM' : 'AM';
+  const h12  = rawH % 12 || 12;
+  const m    = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('home-clock').innerHTML =
+    `${h12}:${m}<span style="font-size:0.38em;letter-spacing:1px;opacity:0.6;vertical-align:super;margin-left:6px;">${ampm}</span>`;
+
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('home-date').textContent =
+    `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+
+  const hr = now.getHours();
+  let greet;
+  if (hr < 5)       greet = 'Working late? 🌙';
+  else if (hr < 12) greet = `Good morning ✨`;
+  else if (hr < 17) greet = `Good afternoon ☀️`;
+  else if (hr < 21) greet = `Good evening 🌆`;
+  else              greet = `Good night 🌙`;
+  document.getElementById('home-greeting').textContent = greet;
+}
+
+// ══════════════════════════════════════════════════════════
+//  MODE SWITCHING
+// ══════════════════════════════════════════════════════════
+function switchMode(mode, doAnim = true) {
+  APP.mode = mode;
+
+  document.querySelectorAll('.ms-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+
+  const homeV = document.getElementById('home-view');
+  const focusV = document.getElementById('focus-view');
+  const ambV   = document.getElementById('ambient-view');
+  const quoteC = document.getElementById('quote-corner');
+  const kbHint = document.getElementById('kb-hint');
+
+  homeV.style.display  = 'none';
+  focusV.style.display = 'none';
+  ambV.style.display   = 'none';
+  quoteC.style.display = 'none';
+
+  if (mode === 'home') {
+    homeV.style.display = 'flex';
+    kbHint.style.display = 'none';
+    setOverlay(APP.cfg.overlay);
+  } else if (mode === 'focus') {
+    focusV.style.display = 'flex';
+    if (APP.cfg.quotes) quoteC.style.display = 'block';
+    quoteC.innerHTML = `"${currentQuote[0]}"`;
+    kbHint.style.display = 'flex';
+    setOverlay(APP.cfg.overlay);
+  } else if (mode === 'ambient') {
+    ambV.style.display = 'flex';
+    // ambient mode: lighter overlay
+    document.getElementById('overlay').style.background = `rgba(0,0,0,${Math.max(0, APP.cfg.overlay / 100 - 0.1)})`;
+    kbHint.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  TIMER MODE SWITCHING
+// ══════════════════════════════════════════════════════════
+function switchTimerMode(tm) {
+  if (APP.running) stopTimer();
+  APP.timerMode = tm;
+  APP.elapsed = 0;
+  APP.pomSession = 1;
+  APP.phase = 'focus';
+
+  document.querySelectorAll('.tmt-btn').forEach(b => b.classList.toggle('active', b.dataset.tm === tm));
+
+  if (tm === 'pomodoro') {
+    APP.totalSec = APP.cfg.focus * 60;
+    document.getElementById('phase-label').textContent = 'Focus Session';
+    document.getElementById('session-pips').style.display = 'flex';
+    document.getElementById('ring-progress').style.display = '';
+  } else if (tm === 'countdown') {
+    APP.totalSec = APP.cfg.focus * 60;
+    document.getElementById('phase-label').textContent = 'Countdown';
+    document.getElementById('session-pips').style.display = 'none';
+    document.getElementById('ring-progress').style.display = '';
+    document.getElementById('timer-digits').classList.add('clickable');
+    document.getElementById('timer-digits').title = 'Click to set duration';
+  } else if (tm === 'stopwatch') {
+    APP.totalSec = 0; APP.elapsed = 0;
+    document.getElementById('phase-label').textContent = 'Stopwatch';
+    document.getElementById('session-pips').style.display = 'none';
+    document.getElementById('ring-progress').style.display = 'none';
+    document.getElementById('timer-digits').classList.remove('clickable');
+  } else if (tm === '5217') {
+    APP.totalSec = APP.cfg.focus52 * 60;
+    document.getElementById('phase-label').textContent = '52 min Focus';
+    document.getElementById('session-pips').style.display = 'none';
+    document.getElementById('ring-progress').style.display = '';
+  }
+
+  if (tm !== 'countdown') document.getElementById('timer-digits').classList.remove('clickable');
+
+  buildSessionPips();
+  updateTimerDisplay();
+  updateRing();
+}
+
+// ══════════════════════════════════════════════════════════
+//  TIMER ENGINE
+// ══════════════════════════════════════════════════════════
+function startTimer() {
+  if (APP.running) { pauseTimer(); return; }
+  APP.running = true;
+  const pp = document.getElementById('btn-play-pause');
+  pp.textContent = '⏸'; pp.classList.add('running');
+  APP.interval = setInterval(tick, 1000);
+}
+
+function pauseTimer() {
+  APP.running = false;
+  clearInterval(APP.interval);
+  const pp = document.getElementById('btn-play-pause');
+  pp.textContent = '▶'; pp.classList.remove('running');
+}
+
+function stopTimer() {
+  APP.running = false;
+  clearInterval(APP.interval);
+  const pp = document.getElementById('btn-play-pause');
+  pp.textContent = '▶'; pp.classList.remove('running');
+}
+
+function resetTimer() {
+  stopTimer();
+  APP.elapsed = 0;
+  if (APP.timerMode === 'pomodoro') {
+    APP.phase = 'focus'; APP.pomSession = 1;
+    APP.totalSec = APP.cfg.focus * 60;
+    document.getElementById('phase-label').textContent = 'Focus Session';
+    document.getElementById('ring-progress').style.stroke = 'rgba(255,255,255,0.85)';
+    buildSessionPips();
+  } else if (APP.timerMode === '5217') {
+    APP.phase = 'focus';
+    APP.totalSec = APP.cfg.focus52 * 60;
+    document.getElementById('phase-label').textContent = '52 min Focus';
+  }
+  updateTimerDisplay(); updateRing();
+}
+
+function tick() {
+  if (APP.timerMode === 'stopwatch') {
+    APP.elapsed++;
+    updateTimerDisplay();
+    return;
+  }
+  APP.elapsed++;
+  const rem = APP.totalSec - APP.elapsed;
+  if (rem <= 0) { phaseComplete(); return; }
+  updateTimerDisplay();
+  updateRing();
+  // sync ambient mini timer
+  if (APP.mode === 'ambient') {
+    document.getElementById('ambient-mini-timer').textContent = fmtTime(Math.max(0, rem));
+  }
+}
+
+function phaseComplete() {
+  stopTimer();
+  ding();
+  notify();
+
+  if (APP.timerMode === 'pomodoro') {
+    if (APP.phase === 'focus') {
+      recordSession(APP.cfg.focus);
+      buildSessionPips();
+      if (APP.pomSession >= APP.cfg.sessions) {
+        APP.phase = 'long'; APP.pomSession = 1;
+        APP.totalSec = APP.cfg.longBreak * 60; APP.elapsed = 0;
+        document.getElementById('phase-label').textContent = 'Long Break ☕';
+        setRingColor('rgba(150,220,180,0.85)');
+        toast('Long break! You earned it 🎉');
+      } else {
+        APP.phase = 'short'; APP.pomSession++;
+        APP.totalSec = APP.cfg.shortBreak * 60; APP.elapsed = 0;
+        document.getElementById('phase-label').textContent = 'Short Break 🍵';
+        setRingColor('rgba(150,200,255,0.85)');
+        toast('Short break! Rest your eyes ☕');
+      }
+      updateTimerDisplay(); updateRing(); buildSessionPips();
+      if (APP.cfg.autoBreak) startTimer();
+    } else {
+      APP.phase = 'focus';
+      APP.totalSec = APP.cfg.focus * 60; APP.elapsed = 0;
+      document.getElementById('phase-label').textContent = 'Focus Session';
+      setRingColor('rgba(255,255,255,0.85)');
+      toast('Back to focus! You got this 🎯');
+      updateTimerDisplay(); updateRing();
+      if (APP.cfg.autoFocus) startTimer();
+    }
+  } else if (APP.timerMode === '5217') {
+    if (APP.phase === 'focus') {
+      recordSession(APP.cfg.focus52);
+      APP.phase = 'short';
+      APP.totalSec = APP.cfg.break17 * 60; APP.elapsed = 0;
+      document.getElementById('phase-label').textContent = '17 min Break 🧘';
+      setRingColor('rgba(150,200,255,0.85)');
+      toast('17 minute break — step away!');
+      if (APP.cfg.autoBreak) startTimer();
+    } else {
+      APP.phase = 'focus';
+      APP.totalSec = APP.cfg.focus52 * 60; APP.elapsed = 0;
+      document.getElementById('phase-label').textContent = '52 min Focus';
+      setRingColor('rgba(255,255,255,0.85)');
+      toast("52 minutes of focus — let's go! 🚀");
+      if (APP.cfg.autoFocus) startTimer();
+    }
+    updateTimerDisplay(); updateRing();
+  } else if (APP.timerMode === 'countdown') {
+    toast('⏰ Time\'s up!');
+    APP.elapsed = 0;
+    updateTimerDisplay(); updateRing();
+  }
+
+  renderStats();
+}
+
+function skipPhase() {
+  if (APP.timerMode !== 'pomodoro' && APP.timerMode !== '5217') return;
+  APP.elapsed = APP.totalSec;
+  phaseComplete();
+}
+
+function recordSession(mins) {
+  const today = new Date().toDateString();
+  APP.stats.todayDate = today;
+  APP.stats.todaySess++;
+  APP.stats.totalSess++;
+  APP.stats.todayMin += mins;
+  APP.stats.totalMin += mins;
+  // Track weekly minutes
+  if (!APP.stats.weekMins) APP.stats.weekMins = [0,0,0,0,0,0,0];
+  const dow = new Date().getDay();
+  const idx = dow === 0 ? 6 : dow - 1;
+  APP.stats.weekMins[idx] = (APP.stats.weekMins[idx] || 0) + mins;
+  updateStreak();
+  saveStats();
+}
+
+function updateStreak() {
+  const today = new Date().toDateString();
+  if (APP.stats.lastDate === today) return;
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  if (APP.stats.lastDate === yesterday.toDateString()) APP.stats.streak++;
+  else if (APP.stats.lastDate === '') APP.stats.streak = 1;
+  else APP.stats.streak = 1;
+  APP.stats.lastDate = today;
+  const dow = new Date().getDay();
+  const idx = dow === 0 ? 6 : dow - 1;
+  APP.stats.week[idx] = (APP.stats.week[idx] || 0) + 1;
+}
+
+// ══════════════════════════════════════════════════════════
+//  DISPLAY
+// ══════════════════════════════════════════════════════════
+function updateTimerDisplay() {
+  let secs;
+  if (APP.timerMode === 'stopwatch') secs = APP.elapsed;
+  else secs = Math.max(0, APP.totalSec - APP.elapsed);
+
+  const t = fmtTime(secs);
+  document.getElementById('timer-digits').textContent = t;
+  document.getElementById('ambient-mini-timer').textContent = t;
+  document.title = APP.running ? `${t} · focusly` : 'flocus';
+}
+
+function fmtTime(s) {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}:${pad(m)}:${pad(sec)}`;
+  return `${pad(m)}:${pad(sec)}`;
+}
+const pad = n => String(n).padStart(2,'0');
+
+function updateRing() {
+  const circ = 2 * Math.PI * 105; // r=105, circumference ≈ 659.73
+  document.getElementById('ring-progress').style.strokeDasharray = circ;
+  if (APP.timerMode === 'stopwatch' || APP.totalSec === 0) {
+    document.getElementById('ring-progress').style.strokeDashoffset = 0;
+    return;
+  }
+  const prog = APP.elapsed / APP.totalSec;
+  document.getElementById('ring-progress').style.strokeDashoffset = circ * prog;
+}
+
+function setRingColor(c) {
+  document.getElementById('ring-progress').style.stroke = c;
+  document.getElementById('ring-progress').style.filter = `drop-shadow(0 0 6px ${c})`;
+}
+
+function buildSessionPips() {
+  const el = document.getElementById('session-pips');
+  el.innerHTML = '';
+  if (APP.timerMode !== 'pomodoro') return;
+  for (let i = 1; i <= APP.cfg.sessions; i++) {
+    const d = document.createElement('div');
+    d.className = 'pip';
+    const doneCount = APP.phase === 'focus' ? APP.pomSession - 1 : APP.pomSession - 1;
+    if (i < APP.pomSession && APP.phase !== 'focus') d.classList.add('done');
+    if (i < APP.pomSession && APP.phase === 'focus') d.classList.add('done');
+    if (i === APP.pomSession && APP.phase === 'focus') d.classList.add('current');
+    el.appendChild(d);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  TASKS
+// ══════════════════════════════════════════════════════════
+function addTask() {
+  const el = document.getElementById('task-in');
+  const txt = el.value.trim(); if (!txt) return;
+  APP.tasks.push({ id: Date.now(), text: txt, done: false, priority: false });
+  el.value = '';
+  saveTasks(); renderTasks(); updateFocusTaskDisplay();
+}
+
+function renderTasks() {
+  const list = document.getElementById('task-list');
+  const count = document.getElementById('task-count');
+  list.innerHTML = '';
+  const total = APP.tasks.length;
+  const done  = APP.tasks.filter(t => t.done).length;
+  count.textContent = `(${done}/${total})`;
+
+  if (total === 0) {
+    list.innerHTML = '<div style="font-size:13px;color:rgba(255,255,255,0.3);text-align:center;padding:16px 0;">No tasks yet</div>';
+    return;
+  }
+  APP.tasks.forEach((t, i) => {
+    const el = document.createElement('div');
+    el.className = 'task-item' + (t.done ? ' done' : '') + (t.priority ? ' priority' : '');
+    el.innerHTML = `
+      <div class="task-check" onclick="toggleDone(${i})">${t.done ? '✓' : ''}</div>
+      <div class="task-txt">${esc(t.text)}</div>
+      <button class="task-star" onclick="togglePriority(${i},event)">${t.priority ? '★' : '☆'}</button>
+      <button class="task-del" onclick="deleteTask(${i},event)">✕</button>
+    `;
+    list.appendChild(el);
+  });
+  updateFocusTaskDisplay();
+}
+
+function toggleDone(i) { APP.tasks[i].done = !APP.tasks[i].done; saveTasks(); renderTasks(); }
+function togglePriority(i, e) {
+  e.stopPropagation();
+  // Only one priority at a time
+  APP.tasks.forEach((t,j) => t.priority = j === i ? !t.priority : false);
+  APP.priorityTask = APP.tasks[i].priority ? i : null;
+  saveTasks(); renderTasks(); updateFocusTaskDisplay();
+}
+function deleteTask(i, e) {
+  e.stopPropagation();
+  if (APP.priorityTask === i) APP.priorityTask = null;
+  APP.tasks.splice(i,1);
+  saveTasks(); renderTasks(); updateFocusTaskDisplay();
+}
+function updateFocusTaskDisplay() {
+  const el = document.getElementById('focus-task');
+  const pt = APP.tasks.find(t => t.priority && !t.done);
+  if (pt) { el.textContent = pt.text; el.classList.remove('no-task'); }
+  else    { el.textContent = '+ Add a priority task'; el.classList.add('no-task'); }
+}
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ══════════════════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════════════════
+function saveSettings() {
+  APP.cfg.focus  = parseInt(document.getElementById('s-focus').value) || 25;
+  APP.cfg.shortBreak = parseInt(document.getElementById('s-short').value) || 5;
+  APP.cfg.longBreak  = parseInt(document.getElementById('s-long').value) || 15;
+  APP.cfg.sessions   = parseInt(document.getElementById('s-sessions').value) || 4;
+  APP.cfg.focus52    = parseInt(document.getElementById('s-52').value) || 52;
+  APP.cfg.break17    = parseInt(document.getElementById('s-17').value) || 17;
+  saveCfg();
+  if (!APP.running) resetTimer();
+  closePanel('settings');
+  toast('Settings saved ✓');
+}
+
+// ══════════════════════════════════════════════════════════
+//  THEMES
+// ══════════════════════════════════════════════════════════
+function setTheme(cls, el) {
+  // Clear any active GIF
+  clearGifBg();
+  document.getElementById('bg').className = cls;
+  APP.cfg.theme = cls;
+  APP.cfg.gifTheme = null;
+  saveCfg();
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.toggle('active', s === el));
+}
+
+// ── GIF Backgrounds ──────────────────────────────────────
+const GIF_URLS = {
+  lofi:   'https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif',
+  rain:   'https://media.giphy.com/media/l46CyJmS9KUbokzsI/giphy.gif',
+  space:  'https://media.giphy.com/media/ZVik7pIojeZ0I/giphy.gif',
+  cherry: 'https://media.giphy.com/media/3o7TKP9ln2Dr6ze6f6/giphy.gif',
+  snow:   'https://media.giphy.com/media/hCKEBFTCdHMoM/giphy.gif',
+};
+
+function setGifTheme(name, el) {
+  if (name === 'custom') return; // handled by file upload
+  const url = GIF_URLS[name];
+  if (!url) return;
+  applyGifBg(url);
+  APP.cfg.gifTheme = name;
+  APP.cfg.gifUrl = url;
+  saveCfg();
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+  if (el) el.classList.add('active');
+  toast('✨ Animated background loading...');
+}
+
+function applyGifBg(url) {
+  const gifEl = document.getElementById('bg-gif');
+  const bgEl  = document.getElementById('bg');
+  gifEl.src = url;
+  gifEl.classList.add('active');
+  bgEl.className = ''; // clear photo class
+  bgEl.style.background = 'rgba(0,0,0,0.85)'; // dark fallback while loading
+  gifEl.onload = () => { bgEl.style.background = 'transparent'; };
+}
+
+function clearGifBg() {
+  const gifEl = document.getElementById('bg-gif');
+  gifEl.classList.remove('active');
+  gifEl.src = '';
+  APP.cfg.gifTheme = null;
+  APP.cfg.gifUrl   = null;
+}
+
+function loadCustomGif(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    const url = ev.target.result;
+    const gifEl = document.getElementById('bg-gif');
+    const bgEl  = document.getElementById('bg');
+    gifEl.src = url;
+    gifEl.classList.add('active');
+    bgEl.className = '';
+    bgEl.style.background = 'rgba(0,0,0,0.8)';
+    APP.cfg.gifTheme = 'custom';
+    APP.cfg.gifUrl = null; // too large to store
+    document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+    document.querySelector('[data-gif="custom"]')?.classList.add('active');
+    toast('✨ Custom GIF set!');
+  };
+  r.readAsDataURL(f);
+}
+function loadCustomBg(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    clearGifBg();
+    const bg = document.getElementById('bg');
+    bg.style.backgroundImage = `url('${ev.target.result}')`;
+    bg.style.backgroundSize = 'cover';
+    bg.style.backgroundPosition = 'center';
+    bg.className = '';
+    document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+    toast('Custom background set ✓');
+  };
+  r.readAsDataURL(f);
+}
+function setOverlay(val, save=true) {
+  document.getElementById('overlay').style.background = `rgba(0,0,0,${val/100})`;
+  if (save) APP.cfg.overlay = parseInt(val);
+}
+
+// ══════════════════════════════════════════════════════════
+//  SOUNDS (Web Audio API — procedural synthesis)
+// ══════════════════════════════════════════════════════════
+let audioCtx = null;
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
+const SOUND_DEFS = [
+  { id:'rain',    label:'Rain',           emoji:'🌧', gen: rainGen },
+  { id:'forest',  label:'Forest',         emoji:'🌲', gen: forestGen },
+  { id:'waves',   label:'Ocean Waves',    emoji:'🌊', gen: wavesGen },
+  { id:'cafe',    label:'Café Chatter',   emoji:'☕', gen: cafeGen },
+  { id:'white',   label:'White Noise',    emoji:'〰', gen: whiteGen },
+  { id:'fire',    label:'Fireplace',      emoji:'🔥', gen: fireGen },
+  { id:'thunder', label:'Distant Thunder',emoji:'⛈', gen: thunderGen },
+];
+
+const MUSIC_LIST = [
+  { id:'lofi',      label:'Lo-Fi Beats',     emoji:'🎵', url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk' },
+  { id:'ambient',   label:'Ambient Focus',   emoji:'🎹', url: 'https://www.youtube.com/watch?v=7NOSDKb0HlU' },
+  { id:'classical', label:'Classical Study', emoji:'🎻', url: 'https://www.youtube.com/watch?v=mDOP4FB2IfE' },
+  { id:'jazz',      label:'Jazz Café',       emoji:'🎷', url: 'https://www.youtube.com/watch?v=Dx5qFachd3A' },
+];
+
+function buildSoundCards() {
+  const list = document.getElementById('sound-list');
+  list.innerHTML = '';
+  SOUND_DEFS.forEach(def => {
+    APP.sounds[def.id] = { on: false, vol: 0.5, nodes: null };
+    const card = document.createElement('div');
+    card.className = 'sound-card';
+    card.id = 'sc-' + def.id;
+    card.innerHTML = `
+      <div class="sc-row">
+        <div class="sc-name"><span class="sc-icon">${def.emoji}</span>${def.label}</div>
+        <div class="toggle" id="st-${def.id}" onclick="toggleSound('${def.id}')"></div>
+      </div>
+      <input type="range" min="0" max="1" step="0.05" value="0.5" oninput="setSoundVol('${def.id}',this.value)">
+    `;
+    list.appendChild(card);
+  });
+}
+
+function buildMusicList() {
+  const list = document.getElementById('music-list');
+  list.innerHTML = '';
+  MUSIC_LIST.forEach(m => {
+    const el = document.createElement('div');
+    el.className = 'sound-card';
+    el.id = 'ml-' + m.id;
+    el.style.cursor = 'pointer';
+    el.innerHTML = `
+      <div class="sc-row" onclick="playMusic('${m.id}','${m.url}')">
+        <div class="sc-name"><span class="sc-icon">${m.emoji}</span>${m.label}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4)" id="ms-${m.id}">▶ Open</div>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function toggleSound(id) {
+  const s = APP.sounds[id];
+  s.on = !s.on;
+  const tog = document.getElementById('st-' + id);
+  const card = document.getElementById('sc-' + id);
+  tog.classList.toggle('on', s.on);
+  card.classList.toggle('on', s.on);
+
+  if (s.on) {
+    const ctx = getCtx();
+    const def = SOUND_DEFS.find(d => d.id === id);
+    s.nodes = def.gen(ctx, s.vol * APP.cfg.masterVol);
+  } else {
+    if (s.nodes) {
+      try { s.nodes.src && s.nodes.src.stop(); } catch(e) {}
+      try { s.nodes.extra && s.nodes.extra.forEach(n => n.stop()); } catch(e) {}
+      s.nodes = null;
+    }
+  }
+}
+
+function setSoundVol(id, val) {
+  APP.sounds[id].vol = parseFloat(val);
+  if (APP.sounds[id].nodes && APP.sounds[id].nodes.gain) {
+    APP.sounds[id].nodes.gain.gain.value = parseFloat(val) * APP.cfg.masterVol * 0.6;
+  }
+}
+
+function setMasterVol(val) {
+  APP.cfg.masterVol = parseFloat(val);
+  Object.keys(APP.sounds).forEach(id => {
+    if (APP.sounds[id].on && APP.sounds[id].nodes && APP.sounds[id].nodes.gain) {
+      APP.sounds[id].nodes.gain.gain.value = APP.sounds[id].vol * parseFloat(val) * 0.6;
+    }
+  });
+}
+
+function playMusic(id, url) {
+  APP.musicOn = id;
+  document.querySelectorAll('[id^="ms-"]').forEach(el => el.textContent = '▶ Open');
+  document.getElementById('ms-' + id).textContent = '↗ Opening...';
+  window.open(url, '_blank');
+  toast('♬ Opening in new tab...');
+  setTimeout(() => { document.getElementById('ms-' + id).textContent = '▶ Open'; }, 2000);
+}
+
+// ── Sound generators ──────────────────────────────────────
+function makeNoise(ctx, duration = 2) {
+  const buf = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buf; src.loop = true;
+  return src;
+}
+function makeGain(ctx, val) {
+  const g = ctx.createGain(); g.gain.value = val; return g;
+}
+function makeBPF(ctx, freq, q=1) {
+  const f = ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq; f.Q.value=q; return f;
+}
+function makeLPF(ctx, freq) {
+  const f = ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=freq; return f;
+}
+
+function rainGen(ctx, vol) {
+  const src = makeNoise(ctx, 3);
+  const bpf = makeBPF(ctx, 900, 0.4);
+  const g   = makeGain(ctx, vol * 0.45);
+  src.connect(bpf); bpf.connect(g); g.connect(ctx.destination);
+  src.start();
+  return { src, gain: g };
+}
+function forestGen(ctx, vol) {
+  const src = makeNoise(ctx, 2);
+  const lpf = makeLPF(ctx, 1000);
+  const g   = makeGain(ctx, vol * 0.18);
+  src.connect(lpf); lpf.connect(g); g.connect(ctx.destination);
+  src.start();
+  return { src, gain: g };
+}
+function wavesGen(ctx, vol) {
+  const src = makeNoise(ctx, 4);
+  const bpf = makeBPF(ctx, 350, 0.6);
+  const lfo = ctx.createOscillator(); lfo.frequency.value = 0.12; lfo.type = 'sine';
+  const lfoGain = makeGain(ctx, 0.25);
+  const g = makeGain(ctx, vol * 0.4);
+  lfo.connect(lfoGain); lfoGain.connect(g.gain);
+  src.connect(bpf); bpf.connect(g); g.connect(ctx.destination);
+  src.start(); lfo.start();
+  return { src, gain: g, extra: [lfo] };
+}
+function cafeGen(ctx, vol) {
+  const src = makeNoise(ctx, 2);
+  const lpf = makeLPF(ctx, 2500);
+  const bpf = makeBPF(ctx, 1200, 0.5);
+  const g   = makeGain(ctx, vol * 0.28);
+  src.connect(lpf); lpf.connect(bpf); bpf.connect(g); g.connect(ctx.destination);
+  src.start();
+  return { src, gain: g };
+}
+function whiteGen(ctx, vol) {
+  const src = makeNoise(ctx, 2);
+  const g   = makeGain(ctx, vol * 0.22);
+  src.connect(g); g.connect(ctx.destination);
+  src.start();
+  return { src, gain: g };
+}
+function fireGen(ctx, vol) {
+  const src = makeNoise(ctx, 2);
+  const lpf = makeLPF(ctx, 500);
+  const pf  = ctx.createBiquadFilter(); pf.type='peaking'; pf.frequency.value=200; pf.gain.value=8;
+  const g   = makeGain(ctx, vol * 0.35);
+  src.connect(lpf); lpf.connect(pf); pf.connect(g); g.connect(ctx.destination);
+  src.start();
+  return { src, gain: g };
+}
+function thunderGen(ctx, vol) {
+  // Low rumble
+  const src = makeNoise(ctx, 5);
+  const lpf = makeLPF(ctx, 120);
+  const lfo = ctx.createOscillator(); lfo.frequency.value = 0.05; lfo.type = 'sine';
+  const lfoG = makeGain(ctx, 0.3);
+  const g = makeGain(ctx, vol * 0.5);
+  lfo.connect(lfoG); lfoG.connect(g.gain);
+  src.connect(lpf); lpf.connect(g); g.connect(ctx.destination);
+  src.start(); lfo.start();
+  return { src, gain: g, extra: [lfo] };
+}
+
+// ── Notification ding ─────────────────────────────────────
+function ding() {
+  try {
+    const ctx = getCtx();
+    [[523.25, 0], [659.25, 0.18], [783.99, 0.36]].forEach(([freq, t]) => {
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = freq;
+      o.connect(g); g.connect(ctx.destination);
+      const start = ctx.currentTime + t;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(0.28, start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, start + 0.6);
+      o.start(start); o.stop(start + 0.65);
+    });
+  } catch(e) {}
+}
+
+function notify() {
+  if (!APP.cfg.notifs) return;
+  const msg = APP.phase === 'focus' ? 'Break time! You earned it.' : 'Focus time! Let\'s go.';
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('flocus', { body: msg });
+  } else if ('Notification' in window && Notification.permission !== 'denied') {
+    Notification.requestPermission();
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════════════════════════
+function renderStats() {
+  const s = APP.stats;
+  const totalMin = s.todayMin;
+  const h = Math.floor(totalMin / 60), m = totalMin % 60;
+  document.getElementById('st-time').textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
+  document.getElementById('st-sess').textContent = s.todaySess;
+  document.getElementById('st-streak').textContent = s.streak;
+
+  const totalH = Math.floor(s.totalMin / 60);
+  const totalM = s.totalMin % 60;
+  document.getElementById('st-total-h').textContent = totalH > 0 ? `${totalH}h` : `${s.totalMin}m`;
+  document.getElementById('st-total-s').textContent = s.totalSess;
+
+  const goal = 8;
+  const sessGoalPct = Math.min(100, (s.todaySess / goal) * 100);
+  document.getElementById('gb-cur').textContent = `${s.todaySess} / ${goal} sessions`;
+  document.getElementById('gb-fill').style.width = sessGoalPct + '%';
+
+  const days = ['M','T','W','T','F','S','S'];
+  const bars = document.getElementById('week-bars');
+  bars.innerHTML = '';
+  const weekMins = s.weekMins || [0,0,0,0,0,0,0];
+  const maxW = Math.max(1, ...weekMins);
+  const todayIdx = (() => { const d = new Date().getDay(); return d === 0 ? 6 : d - 1; })();
+
+  days.forEach((d, i) => {
+    const mins = weekMins[i] || 0;
+    const pct  = (mins / maxW) * 100;
+    const label = mins >= 60 ? `${Math.floor(mins/60)}h` : (mins > 0 ? `${mins}m` : '');
+    const isTday = i === todayIdx;
+    const w = document.createElement('div');
+    w.className = 'wbar-wrap';
+    w.innerHTML = `
+      <div class="wbar-track" title="${label || '0m'}">
+        <div class="wbar-fill" style="height:${pct}%;background:${isTday ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.35)'}"></div>
+      </div>
+      <div class="wbar-label" style="color:${isTday ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.38)'}">${d}</div>
+    `;
+    bars.appendChild(w);
+  });
+}
+
+function resetStats() {
+  if (!confirm('Reset all focus stats? This cannot be undone.')) return;
+  APP.stats = {
+    todayDate: new Date().toDateString(),
+    todaySess: 0, todayMin: 0,
+    totalSess: 0, totalMin: 0,
+    week: [0,0,0,0,0,0,0],
+    weekMins: [0,0,0,0,0,0,0],
+    streak: 0, lastDate: ''
+  };
+  saveStats(); renderStats(); toast('Stats have been reset');
+}
+
+// ══════════════════════════════════════════════════════════
+//  PANELS
+// ══════════════════════════════════════════════════════════
+function openPanel(name) {
+  closeAllPanels();
+  document.getElementById('panel-' + name).classList.add('open');
+  document.getElementById('btn-' + name)?.classList.add('active');
+  if (name === 'stats') renderStats();
+  if (name === 'tasks') renderTasks();
+}
+function closePanel(name) {
+  document.getElementById('panel-' + name).classList.remove('open');
+  document.getElementById('btn-' + name)?.classList.remove('active');
+}
+function closeAllPanels() {
+  document.querySelectorAll('.panel-overlay').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.tb-btn').forEach(b => b.classList.remove('active'));
+}
+
+// Panel buttons
+document.getElementById('btn-settings').onclick = () => openPanel('settings');
+document.getElementById('btn-themes').onclick   = () => openPanel('themes');
+document.getElementById('btn-sounds').onclick   = () => openPanel('sounds');
+document.getElementById('btn-tasks').onclick    = () => openPanel('tasks');
+document.getElementById('btn-stats').onclick    = () => openPanel('stats');
+
+// Mode switcher
+document.querySelectorAll('.ms-btn').forEach(b => {
+  b.onclick = () => switchMode(b.dataset.mode);
+});
+
+// Timer mode tabs
+document.querySelectorAll('.tmt-btn').forEach(b => {
+  b.onclick = () => switchTimerMode(b.dataset.tm);
+});
+
+// Timer controls
+document.getElementById('btn-play-pause').onclick = startTimer;
+document.getElementById('btn-reset').onclick = resetTimer;
+document.getElementById('btn-skip').onclick  = skipPhase;
+
+// Countdown: click timer to set
+document.getElementById('timer-digits').onclick = () => {
+  if (APP.timerMode !== 'countdown' || APP.running) return;
+  const res = prompt('Enter duration (minutes:seconds or just minutes):', '25:00');
+  if (!res) return;
+  const parts = res.split(':');
+  let s = 0;
+  if (parts.length === 2) s = parseInt(parts[0]) * 60 + parseInt(parts[1] || 0);
+  else s = parseInt(parts[0]) * 60;
+  if (s > 0) { APP.totalSec = s; APP.elapsed = 0; updateTimerDisplay(); updateRing(); }
+};
+
+// ══════════════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+  switch(e.key) {
+    case ' ':  e.preventDefault(); startTimer(); break;
+    case 'r': case 'R': resetTimer(); break;
+    case 't': case 'T': openPanel('tasks'); break;
+    case 'a': case 'A': openPanel('sounds'); break;
+    case 'h': case 'H': openPanel('themes'); break;
+    case ',': openPanel('settings'); break;
+    case 'Escape': closeAllPanels(); break;
+    case '1': switchMode('home'); break;
+    case '2': switchMode('focus'); break;
+    case '3': switchMode('ambient'); break;
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════════
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// ══════════════════════════════════════════════════════════
+//  START
+// ══════════════════════════════════════════════════════════
+switchMode('focus', false);
+init();
+</script>
+</body>
+</html>
